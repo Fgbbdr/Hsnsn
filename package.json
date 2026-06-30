@@ -1,0 +1,35 @@
+{
+  "name": "step-index-analysis-tool",
+  "version": "1.0.0",
+  "description": "Comprehensive Step Index analysis tool with multi-indicator support and pattern recognition for TradeView platform",
+  "main": "agents/index.js",
+  "scripts": {
+    "start": "node example/analysisExample.js",
+    "test": "jest",
+    "analyze": "node example/analysisExample.js",
+    "dev": "nodemon example/analysisExample.js"
+  },
+  "keywords": [
+    "trading",
+    "technical-analysis",
+    "indicators",
+    "candlestick",
+    "step-index",
+    "tradeview",
+    "market-analysis"
+  ],
+  "author": "Fgbbdr",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "nodemon": "^2.0.20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fgbbdr/Hsnsn.git"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
