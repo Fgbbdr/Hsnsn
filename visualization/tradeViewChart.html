@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Index Analysis Tool - TradeView Chart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0f0f0f;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #444;
+            padding-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            color: #00ff00;
+        }
+
+        header p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .control-panel {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            border: 1px solid #333;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 8px 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .control-group button {
+            padding: 8px 16px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .control-group button:hover {
+            background: #00cc00;
+            transform: scale(1.05);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            overflow: auto;
+        }
+
+        #tradingChart {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #0f0f0f;
+            border-radius: 4px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .panel h3 {
+            font-size: 14px;
+            color: #00ff00;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .indicator-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .indicator-row:last-child {
+            border-bottom: none;
+        }
+
+        .indicator-label {
+            color: #aaa;
+        }
+
+        .indicator-value {
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .indicator-value.bullish {
+            color: #00ff00;
+        }
+
+        .indicator-value.bearish {
+            color: #ff4444;
+        }
+
+        .indicator-value.neutral {
+            color: #ffff00;
+        }
+
+        .level-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .level-row:last-child {
+            border-bottom: none;
+        }
+
+        .level-label {
+            color: #aaa;
+        }
+
+        .level-value {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .level-value.resistance {
+            color: #ff6b6b;
+        }
+
+        .level-value.support {
+            color: #51cf66;
+        }
+
+        .alerts-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            background: #2a2a2a;
+            border-left: 3px solid #ffff00;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .alert-item.high {
+            border-left-color: #ff4444;
+            background: #3a2a2a;
+        }
+
+        .alert-item.medium {
+            border-left-color: #ffaa44;
+            background: #3a3a2a;
+        }
+
+        .alert-type {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .alert-message {
+            color: #aaa;
+            margin-top: 4px;
+            font-size: 10px;
+        }
+
+        .summary-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .summary-box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .summary-box h4 {
+            color: #00ff00;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .summary-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        .probability-score {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .probability-score.strong {
+            color: #00ff00;
+        }
+
+        .probability-score.moderate {
+            color: #ffff00;
+        }
+
+        .probability-score.weak {
+            color: #ff4444;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .spinner {
+            border: 4px solid #333;
+            border-top: 4px solid #00ff00;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Step Index Analysis Tool</h1>
+            <p>Real-time Technical Analysis with Multi-Indicator Support</p>
+        </header>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="control-group">
+                <label>Timeframe</label>
+                <select id="timeframeSelect" onchange="updateTimeframe()">
+                    <option value="1m">1 Minute</option>
+                    <option value="5m">5 Minutes</option>
+                    <option value="15m" selected>15 Minutes</option>
+                    <option value="30m">30 Minutes</option>
+                    <option value="1h">1 Hour</option>
+                    <option value="4h">4 Hours</option>
+                    <option value="daily">Daily</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Trade Type</label>
+                <select id="tradeTypeSelect" onchange="updateTradeType()">
+                    <option value="short-term" selected>Short-term (Scalping)</option>
+                    <option value="long-term">Long-term (Swing)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Chart Type</label>
+                <select id="chartTypeSelect" onchange="updateChartType()">
+                    <option value="candlestick" selected>Candlestick</option>
+                    <option value="line">Line</option>
+                    <option value="ohlc">OHLC</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <button onclick="runAnalysis()">▶ Analyze Now</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Chart -->
+            <div class="chart-container">
+                <canvas id="tradingChart" width="1000" height="500"></canvas>
+                <div id="chartLoading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Analyzing market data...</p>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Indicators Panel -->
+                <div class="panel">
+                    <h3>📊 Indicators</h3>
+                    <div class="indicator-row">
+                        <span class="indicator-label">RSI(14)</span>
+                        <span class="indicator-value" id="rsiValue">--</span>
+                    </div>
+                    <div class="indicator-row">
+                        <span class="indicator-label">MACD</span>
+                        <span class="indicator-value" id="macdValue">--</span>
+                    </div>
+                    <div class="indicator-row">
+                        <span class="indicator-label">ATR</span>
+                        <span class="indicator-value" id="atrValue">--</span>
+                    </div>
+                    <div class="indicator-row">
+                        <span class="indicator-label">Bollinger</span>
+                        <span class="indicator-value" id="bbValue">--</span>
+                    </div>
+                </div>
+
+                <!-- Support/Resistance Panel -->
+                <div class="panel">
+                    <h3>🎯 Levels</h3>
+                    <div class="level-row">
+                        <span class="level-label">Resistance</span>
+                        <span class="level-value resistance" id="resistanceValue">--</span>
+                    </div>
+                    <div class="level-row">
+                        <span class="level-label">Pivot</span>
+                        <span class="level-value" id="pivotValue">--</span>
+                    </div>
+                    <div class="level-row">
+                        <span class="level-label">Support</span>
+                        <span class="level-value support" id="supportValue">--</span>
+                    </div>
+                </div>
+
+                <!-- Probability Panel -->
+                <div class="panel">
+                    <h3>🎲 Probability</h3>
+                    <div class="probability-score" id="probabilityScore">--</div>
+                    <div style="font-size: 12px; color: #aaa; margin-top: 10px; text-align: center;" id="signalStrength">--</div>
+                </div>
+
+                <!-- Alerts Panel -->
+                <div class="panel">
+                    <h3>⚠️ Alerts</h3>
+                    <div class="alerts-list" id="alertsList">
+                        <div style="color: #666; font-size: 12px;">No alerts yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section" id="summarySection" style="display: none; margin-top: 40px;">
+            <div class="summary-box">
+                <h4>📈 Trend Analysis</h4>
+                <div class="summary-content" id="trendSummary">--</div>
+            </div>
+
+            <div class="summary-box">
+                <h4>🔍 Patterns</h4>
+                <div class="summary-content" id="patternsSummary">--</div>
+            </div>
+
+            <div class="summary-box">
+                <h4>💡 Trade Setup</h4>
+                <div class="summary-content" id="setupSummary">--</div>
+            </div>
+
+            <div class="summary-box">
+                <h4>📊 Risk/Reward</h4>
+                <div class="summary-content" id="riskRewardSummary">--</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTimeframe = '15m';
+        let currentTradeType = 'short-term';
+        let analysisData = null;
+
+        function updateTimeframe() {
+            currentTimeframe = document.getElementById('timeframeSelect').value;
+        }
+
+        function updateTradeType() {
+            currentTradeType = document.getElementById('tradeTypeSelect').value;
+        }
+
+        function updateChartType() {
+            // Chart type switching would be implemented here
+        }
+
+        async function runAnalysis() {
+            const chartLoading = document.getElementById('chartLoading');
+            chartLoading.style.display = 'block';
+
+            // Simulate API call to backend analysis tool
+            try {
+                // This would call the actual StepIndexAnalysisTool
+                const sampleData = generateSampleMarketData();
+                
+                // Simulate processing delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateUI(sampleData);
+                renderChart(sampleData);
+            } catch (error) {
+                console.error('Analysis failed:', error);
+            } finally {
+                chartLoading.style.display = 'none';
+            }
+        }
+
+        function generateSampleMarketData() {
+            // Generate sample OHLC data
+            const candles = [];
+            let price = 1000;
+            
+            for (let i = 0; i < 50; i++) {
+                const change = (Math.random() - 0.5) * 5;
+                const open = price;
+                const close = price + change;
+                const high = Math.max(open, close) + Math.random() * 2;
+                const low = Math.min(open, close) - Math.random() * 2;
+                
+                candles.push({ open, high, low, close });
+                price = close;
+            }
+
+            return {
+                candles,
+                indicators: {
+                    rsi: { rsi: 65, status: 'neutral' },
+                    macd: { signal: 'bullish' },
+                    atr: { volatilityLevel: 'high' },
+                    bollingerBands: {
+                        upper: 1010,
+                        middle: 1000,
+                        lower: 990
+                    },
+                    pivotPoints: {
+                        pivot: 1000,
+                        resistance1: 1005,
+                        support1: 995
+                    }
+                },
+                patterns: {
+                    doji: { detected: false },
+                    hammer: { detected: true, type: 'Hammer', signal: 'bullish reversal' }
+                },
+                trend: {
+                    direction: 'bullish',
+                    supportResistance: {
+                        nearestResistance: 1005,
+                        nearestSupport: 995,
+                        resistanceDistance: 5,
+                        supportDistance: 5
+                    }
+                },
+                alerts: [
+                    { type: 'RSI Alert', message: 'RSI approaching overbought', priority: 'medium' },
+                    { type: 'Pattern', message: 'Hammer pattern detected', priority: 'high' }
+                ]
+            };
+        }
+
+        function updateUI(data) {
+            // Update indicator panel
+            document.getElementById('rsiValue').textContent = '65';
+            document.getElementById('rsiValue').className = 'indicator-value neutral';
+            
+            document.getElementById('macdValue').textContent = 'BULLISH';
+            document.getElementById('macdValue').className = 'indicator-value bullish';
+            
+            document.getElementById('atrValue').textContent = 'HIGH';
+            document.getElementById('atrValue').className = 'indicator-value';
+            
+            document.getElementById('bbValue').textContent = 'SQUEEZE';
+            document.getElementById('bbValue').className = 'indicator-value';
+
+            // Update support/resistance
+            document.getElementById('resistanceValue').textContent = '1005.00';
+            document.getElementById('pivotValue').textContent = '1000.00';
+            document.getElementById('supportValue').textContent = '995.00';
+
+            // Update probability
+            document.getElementById('probabilityScore').textContent = '72%';
+            document.getElementById('probabilityScore').className = 'probability-score strong';
+            document.getElementById('signalStrength').textContent = 'STRONG SIGNAL';
+
+            // Update alerts
+            const alertsList = document.getElementById('alertsList');
+            alertsList.innerHTML = data.alerts.map(alert => `
+                <div class="alert-item ${alert.priority}">
+                    <span class="alert-type">${alert.type}</span>
+                    <div class="alert-message">${alert.message}</div>
+                </div>
+            `).join('');
+
+            // Update summary section
+            document.getElementById('summarySection').style.display = 'grid';
+            document.getElementById('trendSummary').textContent = 'Bullish trend detected with strong momentum';
+            document.getElementById('patternsSummary').innerHTML = '<div style="background:#00ff0030; border:1px solid #00ff00; color:#00ff00; padding:4px 8px; border-radius:3px; font-size:11px; display:inline-block;">Hammer - Bullish Reversal</div>';
+            document.getElementById('setupSummary').textContent = 'BUY on pullback to support at 995.00\nStop Loss: 990.00\nTarget: 1010.00';
+            document.getElementById('riskRewardSummary').textContent = 'Risk: 5 pips\nReward: 15 pips\nRatio: 1:3';
+        }
+
+        function renderChart(data) {
+            const canvas = document.getElementById('tradingChart');
+            const ctx = canvas.getContext('2d');
+            const padding = 40;
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear canvas
+            ctx.fillStyle = '#0f0f0f';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw grid
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 0.5;
+            for (let i = padding; i < width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, padding);
+                ctx.lineTo(i, height - padding);
+                ctx.stroke();
+            }
+
+            // Draw candlesticks
+            const priceRange = 20;
+            const minPrice = 990;
+            const candleWidth = (width - 2 * padding) / data.candles.length;
+
+            data.candles.forEach((candle, idx) => {
+                const x = padding + idx * candleWidth + candleWidth / 2;
+                const openY = height - padding - ((candle.open - minPrice) / priceRange) * (height - 2 * padding);
+                const closeY = height - padding - ((candle.close - minPrice) / priceRange) * (height - 2 * padding);
+                const highY = height - padding - ((candle.high - minPrice) / priceRange) * (height - 2 * padding);
+                const lowY = height - padding - ((candle.low - minPrice) / priceRange) * (height - 2 * padding);
+
+                // Wick
+                ctx.strokeStyle = candle.close >= candle.open ? '#00ff00' : '#ff0000';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, highY);
+                ctx.lineTo(x, lowY);
+                ctx.stroke();
+
+                // Body
+                ctx.fillStyle = candle.close >= candle.open ? '#00ff00' : '#ff0000';
+                ctx.fillRect(x - candleWidth * 0.33, Math.min(openY, closeY), candleWidth * 0.66, Math.abs(closeY - openY) || 2);
+            });
+
+            // Draw support/resistance
+            ctx.strokeStyle = '#ff4444';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 5]);
+            const resistanceY = height - padding - ((1005 - minPrice) / priceRange) * (height - 2 * padding);
+            ctx.beginPath();
+            ctx.moveTo(padding, resistanceY);
+            ctx.lineTo(width - padding, resistanceY);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#51cf66';
+            const supportY = height - padding - ((995 - minPrice) / priceRange) * (height - 2 * padding);
+            ctx.beginPath();
+            ctx.moveTo(padding, supportY);
+            ctx.lineTo(width - padding, supportY);
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+        }
+
+        // Run analysis on page load
+        window.addEventListener('load', () => {
+            runAnalysis();
+        });
+    </script>
+</body>
+</html>
